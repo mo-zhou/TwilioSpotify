@@ -7,7 +7,7 @@ const request = require('request');
 const VoiceResponse = require('twilio').twiml.VoiceResponse;
 const session = require('express-session');
 const urlencoded = require('body-parser').urlencoded;
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 8001;
 const Spotify = require('node-spotify-api');
 
 const clientId = process.env.SPOTIFY_CLIENT; //Register your own app to get a Spotify client ID and secret
