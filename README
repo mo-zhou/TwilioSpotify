@@ -1,0 +1,8 @@
+Run index.js to spin up your local server. You'll need to tunnel out your webhook to be exposed to the Internet for Twilio number to use. Use ngrok: https://ngrok.com/ for tunneling. Alternatively, you can host it on Heroku or any other cloud computing platform.
+
+Purchase a Twilio number with voice capability. Configure the incoming voice webhook to be {your ngrok url}/voice as HTTP POST.
+MORE INFO: https://support.twilio.com/hc/en-us/articles/223135027-Configuring-phone-numbers-to-receive-calls-or-SMS-messages.
+
+Call the twilio number and say the song name you want to hear. Occasionally the song doesn't have a preview option or the ASR (speech recognition) doesn't work just try again. I'm making improvement on that too.
+
+Enjoy! 

@@ -1,0 +1,147 @@
+//Play music through Spotify preview by user request
+//'Response' is Twilio's Twiml Response, 'res' is HTTP response
+//A Twilio number is configureed for the incoming voice webhook
+
+const express = require('express');
+const request = require('request');
+const VoiceResponse = require('twilio').twiml.VoiceResponse;
+const session = require('express-session');
+const urlencoded = require('body-parser').urlencoded;
+const PORT = process.env.PORT || 8000;
+const Spotify = require('node-spotify-api');
+
+const clientId = process.env.SPOTIFY_CLIENT; //Register your own app to get a Spotify client ID and secret
+const clientSecret = process.env.SPOTIFY_SECRET;
+
+let spotify = new Spotify({
+	id: clientId,
+	secret: clientSecret
+});
+
+
+const app = express();
+
+// use session middleware
+app.use(session({
+    secret: 'secret',
+    resave: false,
+    saveUninitialized: true
+}));
+
+app.use(urlencoded({ extended: false }));
+
+//Voice webhook to collect the song request from caller
+app.post('/voice', (req, res) => {
+  // Use the Twilio Node.js SDK to build an XML response
+  const response = new VoiceResponse();
+
+  // Use the <Gather> verb to collect user input
+  const gather =  response.gather({
+  	input: 'speech',
+  	timeout: 5,
+    action: '/result' //check if can directly play
+    });
+
+  gather.say({voice: 'woman'}, 'Welcome, please tell me which song you want to listen to after the beep. When you are finished, press pound.');
+  gather.play('https://www.soundjay.com/button/sounds/beep-01a.mp3');
+  
+  // If the user doesn't enter input, loop
+  response.redirect('/voice');
+
+  // Render the response as XML in reply to the webhook request
+  res.type('text/xml');
+  res.send(response.toString());
+
+});
+
+//retrieve the song name from speech recogntion result 
+app.post('/result', (req, res) => {
+
+	const response = new VoiceResponse();
+
+	if (req.body.SpeechResult) {
+		var requestedTrack = req.body.SpeechResult.toLowerCase();
+		response.say({voice: 'woman'}, `You requested ${requestedTrack}`);
+		req.session.requestedTrack = requestedTrack; //store the speech result to a session data to refer later
+		response.redirect('/play');
+	}
+
+	else {
+		console.log('You did not request a song')
+		response.say({voice: 'woman'}, 'You did not request a song');
+		response.redirect('/voice');
+	}
+
+	res.type('text/xml');
+	res.send(response.toString());
+	
+
+});
+
+//let trackName = 'love'; //placeholder
+
+//playing the requested song
+app.post('/play', (req, res) => {
+	
+	const response = new VoiceResponse();
+	let trackName = req.session.requestedTrack; 
+
+	//response.say(`You requested ${trackName}`);
+	console.log('the track requested is ' + trackName);
+	
+	getTrack(trackName) 
+
+	.then(song => {
+		console.log('the song url is ' + song);
+		response.play(song);
+		res.type('text/xml');
+		res.send(response.toString());	
+	})
+	.catch(err => {
+		response.say(err.message);
+		response.redirect('/voice'); //doesn't redirect it seems!
+		res.type('text/xml');
+		res.send(response.toString());	
+	})
+
+});
+
+//Need to figure out the NULL url issue from Spotify
+
+//utility function to get a Spotify track 
+//return the url of the song
+function getTrack(track) {
+	const response = new VoiceResponse();
+	return new Promise((resolve, reject) => {
+		spotify.search({ 
+			type: 'track', 
+			query: track, 
+			limit: 1,
+			market: 'US'
+		})
+		.then(function(body) {
+			try {
+				console.log('your song name is ' + track);
+				let song_url = body.tracks.items[0].preview_url
+				if (song_url != null) {
+					return resolve(song_url);
+				}
+				else {
+					console.log('Your song request is currently unavailable for preview, please try another one.');				
+					return new Error('Your song request is currently unavailable for preview, please try another one.')
+				}
+			}
+			catch (e) {
+				console.log('Your requested song does not exist, please try another one.');
+				return reject(new Error('Your requested song does not exist, please try another one.'))
+			}
+		})
+		.catch(function(err) {
+			console.log(err);
+			return (err);
+		});
+	})
+}
+
+
+app.listen(PORT, () => console.log(`listening on port ${ PORT }`));

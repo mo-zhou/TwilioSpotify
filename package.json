@@ -1,0 +1,19 @@
+{
+  "name": "spotify",
+  "version": "1.0.0",
+  "description": "Use Twilio and Spotify to request and listen to song previews",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Mo Zhou",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3",
+    "express-session": "^1.15.6",
+    "node-spotify-api": "^1.0.7",
+    "request": "^2.87.0",
+    "twilio": "^3.17.6"
+  }
+}
