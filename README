@@ -1,4 +1,6 @@
-Run index.js to spin up your local server. You'll need to tunnel out your webhook to be exposed to the Internet for Twilio number to use. Use ngrok: https://ngrok.com/ for tunneling. Alternatively, you can host it on Heroku or any other cloud computing platform.
+npm install to install depedent packages. See package.json file if in doubt.
+
+node index.js to spin up your local server. You'll need to tunnel out your webhook to be exposed to the Internet for Twilio number to use. Use ngrok: https://ngrok.com/ for tunneling. Alternatively, you can host it on Heroku or any other cloud computing platform.
 
 Purchase a Twilio number with voice capability. Configure the incoming voice webhook to be {your ngrok url}/voice as HTTP POST.
 MORE INFO: https://support.twilio.com/hc/en-us/articles/223135027-Configuring-phone-numbers-to-receive-calls-or-SMS-messages.
