@@ -39,11 +39,11 @@ app.post('/voice', (req, res) => {
   const gather =  response.gather({
   	input: 'speech',
   	timeout: 5, //5 seconds of waiting
-    action: '/result' //check if can directly play
+    action: '/result'
     });
 
-  gather.say({voice: 'woman'}, 'Welcome, please tell me which song you want to listen to after the beep. When you are finished, press pound.');
-  gather.play('https://www.soundjay.com/button/sounds/beep-01a.mp3');
+  gather.say({voice: 'woman'}, 'Tell me which song you want to hear.');
+  //gather.play('https://www.soundjay.com/button/sounds/beep-01a.mp3'); this beep is really annoying...
   
   // If the user doesn't enter input, loop
   response.redirect('/voice');
@@ -62,6 +62,7 @@ app.post('/result', (req, res) => {
 
 	if (req.body.SpeechResult) {
 		var requestedTrack = req.body.SpeechResult.toLowerCase();
+		//console.log('confidence score is ' + req.body.Confidence);
 		response.say({voice: 'woman'}, `You requested ${requestedTrack}`); //say the requested song name back
 		req.session.requestedTrack = requestedTrack; //store the speech result to a session data to refer later
 		response.redirect('/play');
@@ -90,11 +91,17 @@ app.post('/play', (req, res) => {
 	.then(song => {
 		console.log('the song url is ' + song);
 		response.play(song);
+		response.pause({
+			length: 2
+		});
+		response.say({voice: 'woman'}, 'Now try another song!');
+		response.redirect('/voice'); //redirect to hear another song
 		res.type('text/xml');
 		res.send(response.toString());	
 	})
 	.catch(err => {
 		response.say(err.message);
+
 		response.redirect('/voice'); //doesn't redirect it seems!
 		res.type('text/xml');
 		res.send(response.toString());	
@@ -102,13 +109,10 @@ app.post('/play', (req, res) => {
 
 });
 
-//Need to figure out the NULL url issue from Spotify
-
 //utility function to get a Spotify track using the helper function
 //use Promise to avoid callback hell
 //return the url of the song
 function getTrack(track) {
-	const response = new VoiceResponse();
 	return new Promise((resolve, reject) => {
 		spotify.search({ 
 			type: 'track', //asking to search for a track
@@ -124,8 +128,8 @@ function getTrack(track) {
 					return resolve(song_url);
 				}
 				else {
-					console.log('Your song request is currently unavailable for preview, please try another one.');				
-					return new Error('Your song request is currently unavailable for preview, please try another one.')
+					console.log('Your song request is currently unavailable for preview, listening to My House by Flo Rida instead...');
+					return resolve(getTrack('My House')); //known preview url that exists
 				}
 			}
 			catch (e) {
